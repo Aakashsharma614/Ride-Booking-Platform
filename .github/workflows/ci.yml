@@ -1,0 +1,22 @@
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  build-test-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+        working-directory: ride-booking-platform
+      - run: npm test
+        working-directory: ride-booking-platform
+      - run: npm run build
+        working-directory: ride-booking-platform
+      - run: npm audit --audit-level high
+        working-directory: ride-booking-platform
+      - run: docker build -t ride/api-gateway:test --build-arg WORKSPACE=@ride/api-gateway .
+        working-directory: ride-booking-platform
