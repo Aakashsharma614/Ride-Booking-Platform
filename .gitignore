@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.npm-cache/
+*.log
+.env
+apps/web/dist/
+apps/web/.next/
+coverage/
+dev/
