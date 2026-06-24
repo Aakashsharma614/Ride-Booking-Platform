@@ -1,0 +1,7 @@
+{
+  "name": "@ride/common-security",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js"
+}
+
