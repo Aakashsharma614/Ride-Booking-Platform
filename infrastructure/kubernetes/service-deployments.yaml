@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ride-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: ride-service }
+  template:
+    metadata:
+      labels: { app: ride-service }
+    spec:
+      containers:
+        - name: ride-service
+          image: ride/ride-service:latest
+          ports: [{ containerPort: 8105 }]
+          env:
+            - { name: WORKSPACE, value: "@ride/ride-service" }
+          envFrom:
+            - configMapRef: { name: ride-platform-config }
+            - secretRef: { name: ride-platform-secrets }
+          readinessProbe: { httpGet: { path: /readyz, port: 8105 } }
+          livenessProbe: { httpGet: { path: /healthz, port: 8105 } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ride-service
+spec:
+  selector: { app: ride-service }
+  ports: [{ port: 8105, targetPort: 8105 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matching-service
+spec:
+  replicas: 6
+  selector:
+    matchLabels: { app: matching-service }
+  template:
+    metadata:
+      labels: { app: matching-service }
+    spec:
+      containers:
+        - name: matching-service
+          image: ride/matching-service:latest
+          ports: [{ containerPort: 8104 }]
+          env:
+            - { name: WORKSPACE, value: "@ride/matching-service" }
+          envFrom:
+            - configMapRef: { name: ride-platform-config }
+            - secretRef: { name: ride-platform-secrets }
+          readinessProbe: { httpGet: { path: /readyz, port: 8104 } }
+          livenessProbe: { httpGet: { path: /healthz, port: 8104 } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: matching-service
+spec:
+  selector: { app: matching-service }
+  ports: [{ port: 8104, targetPort: 8104 }]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: matching-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: matching-service
+  minReplicas: 6
+  maxReplicas: 60
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+
